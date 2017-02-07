@@ -1,17 +1,54 @@
 import 'package:test/test.dart';
 import 'package:chip8/chip8.dart';
 import 'dart:typed_data';
+import 'dart:math';
+
+class TestScreen implements ScreenModule {
+  final int height = 64;
+  final int width = 32;
+  void clear() {}
+  void draw() {}
+  bool setPixel(int x, int y) => false;
+  bool getPixel(int x, int y) => false;
+}
+
+class TestSound implements SoundModule {
+  void play() {}
+}
+
+class TestDelayTimer implements DelayTimerModule {
+  int time = 0;
+}
+
+class TestSoundTimer implements SoundTimerModule {
+  SoundModule _sound;
+  int time = 0;
+
+  void attach(SoundModule sound) {
+    _sound = sound;
+  }
+}
 
 void main() {
   group('CPU Opcode', () {
     Cpu cpu;
+    Random random;
+    ScreenModule screen;
+    SoundModule sound;
+    DelayTimerModule delayTimer;
+    SoundTimerModule soundTimer;
 
     setUp(() {
-      cpu = new Cpu();
+      random = new Random(0);
+      screen = new TestScreen();
+      sound = new TestSound();
+      delayTimer = new TestDelayTimer();
+      soundTimer = new TestSoundTimer();
+      cpu = new Cpu(random, screen, sound, delayTimer, soundTimer);
     });
 
     void load(List<int> codes) {
-      cpu.loadOpcodes(new Uint16List.fromList(codes));
+      cpu.loadProgram(new Uint16List.fromList(codes));
     }
 
     void run(int cycles) {
@@ -21,39 +58,23 @@ void main() {
       }
     }
 
-    group('0x0 series', () {
+    group('0x0 series', () {});
 
-    });
-
-    group('0x1 series', () {
-
-    });
-    group('0x2 series', () {
-
-    });
-    group('0x3 series', () {
-
-    });
-    group('0x4 series', () {
-
-    });
-    group('0x5 series', () {
-
-    });
-    group('0x6 series', () {
-
-    });
-    group('0x7 series', () {
-
-    });
+    group('0x1 series', () {});
+    group('0x2 series', () {});
+    group('0x3 series', () {});
+    group('0x4 series', () {});
+    group('0x5 series', () {});
+    group('0x6 series', () {});
+    group('0x7 series', () {});
     // Math and BitOps
     group('0x8 series', () {
       test('0x8XY0 sets the value of Vx to Vy', () {
         cpu.vRegisters[0x1] = 13;
-        
+
         load([0x80, 0x10]);
         run(1);
-        
+
         expect(cpu.vRegisters[0], 13);
         expect(cpu.programCounter, 0x202);
       });
@@ -70,7 +91,7 @@ void main() {
       test('0x8XY2 sets the value of Vx to Vx & Vy', () {
         cpu.vRegisters[0x1] = 13;
         cpu.vRegisters[0x0] = 6;
-        
+
         load([0x80, 0x12]);
         run(1);
 
@@ -100,7 +121,7 @@ void main() {
         expect(cpu.programCounter, 0x202);
       });
       test('0x8XY4 sets the value of Vx to Vy + Vx and Vf to 0 if no carry',
-        () {
+          () {
         cpu.vRegisters[0x1] = 22;
         cpu.vRegisters[0x0] = 35;
 
@@ -111,31 +132,30 @@ void main() {
         expect(cpu.vRegisters[0xF], 0);
         expect(cpu.programCounter, 0x202);
       });
-      test('0x8XY5 sets the value of Vx to Vx - Vy and Vf = 0 if borrow',
-        () {
-          cpu.vRegisters[0x1] = 10;
-          cpu.vRegisters[0x0] = 1;
+      test('0x8XY5 sets the value of Vx to Vx - Vy and Vf = 0 if borrow', () {
+        cpu.vRegisters[0x1] = 10;
+        cpu.vRegisters[0x0] = 1;
 
-          load([0x80, 0x15]);
-          run(1);
+        load([0x80, 0x15]);
+        run(1);
 
-          // 1 - 10 = -9 + 255 = 246
-          expect(cpu.vRegisters[0x0], 246);
-          expect(cpu.vRegisters[0xF], 1);
-          expect(cpu.programCounter, 0x202);
+        // 1 - 10 = -9 + 255 = 246
+        expect(cpu.vRegisters[0x0], 246);
+        expect(cpu.vRegisters[0xF], 1);
+        expect(cpu.programCounter, 0x202);
       });
       test('0x8XY5 sets the value of Vx to Vx - Vy and Vf = 1 if no borrow',
-        () {
-          cpu.vRegisters[0x1] = 1;
-          cpu.vRegisters[0x0] = 10;
+          () {
+        cpu.vRegisters[0x1] = 1;
+        cpu.vRegisters[0x0] = 10;
 
-          load([0x80, 0x15]);
-          run(1);
+        load([0x80, 0x15]);
+        run(1);
 
-          // 1 - 10 = -9 + 255 = 246
-          expect(cpu.vRegisters[0x0], 9);
-          expect(cpu.vRegisters[0xF], 0);
-          expect(cpu.programCounter, 0x202);
+        // 1 - 10 = -9 + 255 = 246
+        expect(cpu.vRegisters[0x0], 9);
+        expect(cpu.vRegisters[0xF], 0);
+        expect(cpu.programCounter, 0x202);
       });
       test('0x8XY6 shifts Vx right by 1 and sets VF to the LSB', () {
         cpu.vRegisters[0x0] = 9; // 0b1001
@@ -230,12 +250,10 @@ void main() {
         // TODO
       });
     });
-    group('0xE series', () {
-
-    });
+    group('0xE series', () {});
     group('0xF series', () {
       test('0xFX07 sets Vx to the value of the delay timer', () {
-        cpu.delayTimer = 24;
+        cpu.delayTimer.time = 24;
 
         load([0xF0, 0x07]);
         run(1);
@@ -245,24 +263,24 @@ void main() {
       });
 
       test('0xFX15 sets the delay timer to Vx', () {
-        cpu.delayTimer = 0;
+        cpu.delayTimer.time = 0;
         cpu.vRegisters[0x0] = 2;
 
         load([0xF0, 0x15]);
         run(1);
 
-        expect(cpu.delayTimer, 2);
+        expect(cpu.delayTimer.time, 2);
         expect(cpu.programCounter, 0x202);
       });
 
       test('0xFX18 sets the sound timer to Vx', () {
-        cpu.soundTimer = 0;
+        cpu.soundTimer.time = 0;
         cpu.vRegisters[0x0] = 2;
 
         load([0xF0, 0x18]);
         run(1);
 
-        expect(cpu.soundTimer, 2);
+        expect(cpu.soundTimer.time, 2);
         expect(cpu.programCounter, 0x202);
       });
 
@@ -276,48 +294,48 @@ void main() {
         expect(cpu.iRegister, 15);
         expect(cpu.programCounter, 0x202);
       });
-      test('0xFX33', () {
-
-      });
-      test('0xFX55 fills values from V0 to Vx inclusive with values in memory'
+      test('0xFX33', () {});
+      test(
+          '0xFX55 fills values from V0 to Vx inclusive with values in memory'
           ' starting at the iRegister', () {
-          cpu.memory[4] = 0;
-          cpu.memory[5] = 0;
-          cpu.vRegisters[0x0] = 1;
-          cpu.vRegisters[0x1] = 2;
-          cpu.vRegisters[0x2] = 3;
-          cpu.vRegisters[0x3] = 4;
-          cpu.vRegisters[0x4] = 5;
-          cpu.vRegisters[0x5] = 6;
-          cpu.iRegister = 0x0;
+        cpu.memory[4] = 0;
+        cpu.memory[5] = 0;
+        cpu.vRegisters[0x0] = 1;
+        cpu.vRegisters[0x1] = 2;
+        cpu.vRegisters[0x2] = 3;
+        cpu.vRegisters[0x3] = 4;
+        cpu.vRegisters[0x4] = 5;
+        cpu.vRegisters[0x5] = 6;
+        cpu.iRegister = 0x0;
 
-          load([0xF4, 0x55]);
-          run(1);
+        load([0xF4, 0x55]);
+        run(1);
 
-          expect(cpu.memory[0], 1);
-          expect(cpu.memory[1], 2);
-          expect(cpu.memory[2], 3);
-          expect(cpu.memory[3], 4);
-          expect(cpu.memory[4], 5);
-          expect(cpu.memory[5], 0);
-          expect(cpu.programCounter, 0x202);
+        expect(cpu.memory[0], 1);
+        expect(cpu.memory[1], 2);
+        expect(cpu.memory[2], 3);
+        expect(cpu.memory[3], 4);
+        expect(cpu.memory[4], 5);
+        expect(cpu.memory[5], 0);
+        expect(cpu.programCounter, 0x202);
       });
-       test('0xFX65 V0 to Vx inclusive with values in memory'
-           ' startin at the iRegister', () {
-          cpu.memory[0] = 1;
-          cpu.memory[1] = 1;
-          cpu.memory[2] = 1;
-          cpu.memory[3] = 1;
-          cpu.memory[4] = 1;
+      test(
+          '0xFX65 V0 to Vx inclusive with values in memory'
+          ' startin at the iRegister', () {
+        cpu.memory[0] = 1;
+        cpu.memory[1] = 1;
+        cpu.memory[2] = 1;
+        cpu.memory[3] = 1;
+        cpu.memory[4] = 1;
 
-          load([0xF2, 0x65]);
-          run(1);
+        load([0xF2, 0x65]);
+        run(1);
 
-          expect(cpu.vRegisters[0], 1);
-          expect(cpu.vRegisters[1], 1);
-          expect(cpu.vRegisters[2], 1);
-          expect(cpu.vRegisters[3], 0);
-          expect(cpu.programCounter, 0x202);
+        expect(cpu.vRegisters[0], 1);
+        expect(cpu.vRegisters[1], 1);
+        expect(cpu.vRegisters[2], 1);
+        expect(cpu.vRegisters[3], 0);
+        expect(cpu.programCounter, 0x202);
       });
     });
   });

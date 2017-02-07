@@ -6,18 +6,7 @@
 /// More dartdocs go here.
 library chip8;
 
-import 'dart:io';
-import 'dart:typed_data';
-
-import 'src/cpu.dart';
 export 'src/cpu.dart';
-
-
-void main() {
-  final bytes = new File('MISSILE').readAsBytesSync();
-  final cpu = new Cpu()..loadOpcodes(new Uint16List.fromList(bytes));
-  for (int i = 0 ; i < 100000; i++) {
-    cpu.loop();
-    print(cpu.screen);
-  }
-}
+export 'src/modules/sound_module.dart';
+export 'src/modules/screen_module.dart';
+export 'src/modules/timer_module.dart';

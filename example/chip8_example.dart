@@ -4,6 +4,4 @@
 import 'package:chip8/chip8.dart';
 
 main() {
-  var awesome = new Awesome();
-  print('awesome: ${awesome.isAwesome}');
 }
