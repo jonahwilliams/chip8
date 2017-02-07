@@ -3,7 +3,7 @@ import 'dart:async';
 import '../modules/timer_module.dart';
 import '../modules/sound_module.dart';
 
-const sixtyHertz = const Duration(milliseconds: 16, microseconds: 66);
+const sixtyHertz = const Duration(milliseconds: 16, microseconds: 666);
 
 class WebDelayTimer implements DelayTimerModule {
   int time = 0;

@@ -72,13 +72,102 @@ void main() {
 
     group('0x0 series', () {});
 
-    group('0x1 series', () {});
-    group('0x2 series', () {});
-    group('0x3 series', () {});
-    group('0x4 series', () {});
-    group('0x5 series', () {});
-    group('0x6 series', () {});
-    group('0x7 series', () {});
+    group('0x1 series', () {
+      test('0x1nnn jumps to location nnn', () {
+        load([0x11, 0x11]);
+        run(1);
+
+        expect(cpu.programCounter, 0x111);
+      });
+    });
+    group('0x2 series', () {
+      test('0x2nnn call subroutine at nnn and increment stack pointer', () {
+        load([0x21, 0x11]);
+        run(1);
+
+        expect(cpu.programCounter, 0x111);
+        expect(cpu.stackPointer, 0x1);
+        expect(cpu.stack[0], 0x200);
+      });
+    });
+    group('0x3 series', () {
+      test('0x3xkk skips the next instruction if Vx == kk', () {
+        cpu.vRegisters[0x1] = 13;
+
+        load([0x31, 0x0D]);
+        run(1);
+
+        expect(cpu.programCounter, 0x204);
+      });
+      test('0x3xkk does not skip the next instruction if Vx != kk', () {
+        cpu.vRegisters[0x1] = 13;
+
+        load([0x31, 0x01]);
+        run(1);
+
+        expect(cpu.programCounter, 0x202);
+      });
+    });
+    group('0x4 series', () {
+      test('0x4xkk skips the next instruction if Vx != kk', () {
+        cpu.vRegisters[0x0] = 7;
+
+        load([0x40, 0x09]);
+        run(1);
+
+        expect(cpu.programCounter, 0x204);
+      });
+      test('0x4xkk does not skip the next instruction if Vx == kk', () {
+        cpu.vRegisters[0x0] = 7;
+
+        load([0x40, 0x07]);
+        run(1);
+
+        expect(cpu.programCounter, 0x202);
+      });
+    });
+    group('0x5 series', () {
+      test('0x5xy0 skips the next instruction if Vx == Vy', () {
+        cpu.vRegisters[0x0] = 12;
+        cpu.vRegisters[0x1] = 12;
+
+        load([0x51, 0x00]);
+        run(1);
+
+        expect(cpu.programCounter, 0x204);
+      });
+       test('0x5xy0 does not skip the next instruction if Vx != Vy', () {
+        cpu.vRegisters[0x0] = 12;
+        cpu.vRegisters[0x1] = 2;
+
+        load([0x51, 0x00]);
+        run(1);
+
+        expect(cpu.programCounter, 0x202);
+      });
+    });
+    group('0x6 series', () {
+      test('0x6xkk sets Vx to kk', () {
+        cpu.vRegisters[0x1] = 12;
+
+        load([0x61, 0x01]);
+        run(1);
+
+        expect(cpu.vRegisters[0x1], 1);
+        expect(cpu.programCounter, 0x202);
+      });
+    });
+    group('0x7 series', () {
+      test('0x7xkk sets Vx to Vx + kk', () {
+        cpu.vRegisters[0x1] = 12;
+
+        load([0x71, 0x01]);
+        run(1);
+
+        expect(cpu.vRegisters[0x1], 13);
+        expect(cpu.programCounter, 0x202);
+      });
+    });
     // Math and BitOps
     group('0x8 series', () {
       test('0x8XY0 sets the value of Vx to Vy', () {
@@ -262,7 +351,9 @@ void main() {
         // TODO
       });
     });
-    group('0xE series', () {});
+    group('0xE series', () {
+      
+    });
     group('0xF series', () {
       test('0xFX07 sets Vx to the value of the delay timer', () {
         cpu.delayTimer.time = 24;

@@ -20,19 +20,8 @@ void main() {
     new WebSound(),
     new WebDelayTimer(),
     new WebSoundTimer());
-  cpu.loadProgram(new Uint16List.fromList(missile));
-  new Timer.periodic(const Duration(milliseconds: 950), (_)  {
+  cpu.loadProgram(new Uint16List.fromList(tictac));
+  new Timer.periodic(const Duration(milliseconds: 16), (_) {
     cpu.loop();
-    updateDebug(cpu);
   });
-}
-
-void updateDebug(Cpu cpu) {
-  for (int i = 0; i < 16; i++) {
-    document.getElementById('$i').innerHtml = '${cpu.vRegisters[i]}';
-  }
-  document.getElementById('i').innerHtml = '${cpu.iRegister}';
-  document.getElementById('delay').innerHtml = '${cpu.delayTimer.time}';
-  document.getElementById('sound').innerHtml = '${cpu.soundTimer.time}';
-  document.getElementById('counter').innerHtml = '${cpu.programCounter}';
 }

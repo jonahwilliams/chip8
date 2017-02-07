@@ -1,12 +1,7 @@
 import 'dart:typed_data';
 import 'dart:math';
 
-import 'modules/screen_module.dart';
-import 'modules/sound_module.dart';
-import 'modules/timer_module.dart';
-import 'modules/input_module.dart';
-
-const fontSet = const <int>[
+const fontSet = const <int>[ 
   0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
   0x20, 0x60, 0x20, 0x20, 0x70, // 1
   0xF0, 0x10, 0xF0, 0x80, 0xF0, // 2
@@ -22,12 +17,12 @@ const fontSet = const <int>[
   0xF0, 0x80, 0x80, 0x80, 0xF0, // C
   0xE0, 0x90, 0x90, 0x90, 0xE0, // D
   0xF0, 0x80, 0xF0, 0x80, 0xF0, // E
-  0xF0, 0x80, 0xF0, 0x80, 0x80 // F
+  0xF0, 0x80, 0xF0, 0x80, 0x80  // F
 ];
+
 
 /// The Chip-8 cpu
 ///
-/// http://devernay.free.fr/hacks/chip8/C8TECH10.HTM
 /// The chip-8 had 15 8 bit general purpose registers, named from
 /// V0 to VE.  The 16th was the carry flag.
 ///
@@ -36,39 +31,42 @@ class Cpu {
   final Uint8List vRegisters = new Uint8List(16);
   final Uint8List memory = new Uint8List(4096);
   final Uint16List stack = new Uint16List(16);
-  final InputModule input;
-  final ScreenModule screen;
-  final SoundModule sound;
-  final DelayTimerModule delayTimer;
-  final SoundTimerModule soundTimer;
-  final Random rand;
-
-  var iRegister = 0x0;
+  final Screen screen = new Screen();
+  final input = 0x0;
+  final Random rand = new Random();
+  
+  var iRegister = 0;
   var programCounter = 0x200;
-  var stackPointer = 0x0;
+  var stackPointer = 0;
+  var delayTimer = 0;
+  var soundTimer = 0;
   var drawFlag = false;
   var blockFlag = false;
-  var currentInput = null;
+  var _blockingFor = 0;
 
-  Cpu(this.rand, this.screen, this.input, this.sound, this.delayTimer,
-      this.soundTimer) {
+  Cpu() {
     // Load font set.
     for (var i = 0, length = fontSet.length; i < length; i++) {
-      memory[i] = fontSet[i];
-    }
-    // attach soundModule to sound timer
-    soundTimer.attach(sound);
-  }
-  void loop() {
-    currentInput = input.keyCode;
-    executeOpcode(opcode);
-    if (drawFlag) {
-      screen.draw();
-      drawFlag = false;
+        memory[i] = fontSet[i];
     }
   }
 
-  void loadProgram(Uint16List buffer) {
+  void playSound() {}
+
+  void loop([int inputCode]) {
+    executeOpcode(opcode);
+    // if (delayTimer > 0) {
+    //   delayTimer--;
+    // }
+    // if (soundTimer > 0) {
+    //   if (soundTimer == 1) {
+    //     playSound();
+    //   }
+    //   soundTimer--;
+    // }
+  }
+
+  void loadOpcodes(Uint16List buffer) {
     for (int i = 0; i < buffer.length; i++) {
       memory[0x200 + i] = buffer[i];
     }
@@ -87,11 +85,11 @@ class Cpu {
       case 0x0:
         if (leftMiddle == 0x0 && rightMiddle == 0xE && right == 0x0) {
           // clear the screen.
-          screen.clear();
+          Screen.clear();
           programCounter += 2;
         } else if (leftMiddle == 0x0 && rightMiddle == 0xE && right == 0xE) {
           // return from subroutine.
-          programCounter = stack[stackPointer - 1];
+          programCounter = stack[stackPointer-1];
           stackPointer--;
         } else {
           // Calls RCA 1802 program at address NNN
@@ -119,8 +117,7 @@ class Cpu {
         break loop;
       case 0x5:
         // Skips the next instruction if VX equals VY.
-        programCounter +=
-            vRegisters[leftMiddle] == vRegisters[rightMiddle] ? 4 : 2;
+        programCounter += vRegisters[leftMiddle] == vRegisters[rightMiddle] ? 4 : 2;
         break loop;
       case 0x6:
         // Sets VX to NN
@@ -200,12 +197,10 @@ class Cpu {
             programCounter += 2;
             break loop;
           default:
-            print('ERROR: unknown code $code');
         }
         break loop;
       case 0x9:
-        programCounter +=
-            vRegisters[leftMiddle] != vRegisters[rightMiddle] ? 4 : 2;
+        programCounter += vRegisters[leftMiddle] != vRegisters[rightMiddle] ? 4 : 2;
         break loop;
       case 0xA:
         // Set the iRegister to the value in the opcode.
@@ -231,54 +226,50 @@ class Cpu {
         final y = vRegisters[rightMiddle];
         final h = code & 0x000F;
         final w = 8;
-
         vRegisters[0xF] = 0x0;
-
         for (int row = 0; row < h; row++) {
-          int pixel = memory[iRegister + row];
+          int pixel = this.memory[iRegister + row];
+          
           for (int col = 0; col < w; col++) {
             if ((pixel & 0x80) > 0) {
-              if (screen.setPixel(x + col, y + row)) {
+              if (this.screen.setPixel(x + col, y + row)) {
                 vRegisters[0xF] = 0x1;
               }
             }
             pixel = pixel << 1;
           }
-        }
+        }        
+
         drawFlag = true;
         programCounter += 2;
         break loop;
       case 0xE:
         if ((code & 0xFF) == 0x9E) {
           // Skips the next instruction if the key stored in VX is pressed
-          programCounter = (vRegisters[leftMiddle] == currentInput)  ? 4 : 2;
+          programCounter = vRegisters[leftMiddle] == input ? 4 : 2;
         } else if ((code & 0xFF) == 0x0A) {
           // Skips the next instruction if the key stored in VX isn't pressed.
-          programCounter = (vRegisters[leftMiddle]  == currentInput) ? 4 : 2;
-        } else {
-          print('ERROR: unknown code $code');
+          programCounter = vRegisters[leftMiddle] != input ? 4 : 2;
         }
         break loop;
       case 0xF:
         switch (code & 0x00FF) {
           case 0x0007:
-            vRegisters[leftMiddle] = delayTimer.time;
+            vRegisters[leftMiddle] = delayTimer;
             programCounter += 2;
             break loop;
           case 0x000A:
-            if (input.keyCode == null) {
-              break loop;
-            } else {
-              vRegisters[leftMiddle] = currentInput;
-              programCounter += 2;
-            }
+            blockFlag = true;
+            //
+            vRegisters[leftMiddle] = input;
+            programCounter + 2;
             break loop;
           case 0x0015:
-            delayTimer.time = vRegisters[leftMiddle];
+            delayTimer = vRegisters[leftMiddle];
             programCounter += 2;
             break loop;
           case 0x0018:
-            soundTimer.time = vRegisters[leftMiddle];
+            soundTimer = vRegisters[leftMiddle];
             programCounter += 2;
             break loop;
           case 0x001E:
@@ -289,17 +280,14 @@ class Cpu {
           case 0x0029:
             // Sets I to the location of the sprite for the character in VX.
             // Characters 0-F (in hexadecimal) are represented by a 4x5 font.
-            vRegisters[0xF] =
-                (iRegister + vRegisters[leftMiddle] > 0xfff) ? 1 : 0;
+            vRegisters[0xF] = (iRegister + vRegisters[leftMiddle] > 0xfff) ? 1 : 0;
             iRegister = iRegister + vRegisters[leftMiddle];
             programCounter += 2;
             break loop;
           case 0x0033:
             memory[iRegister] = vRegisters[(code & 0x0F00) >> 8] ~/ 100;
-            memory[iRegister + 1] =
-                (vRegisters[(code & 0x0F00) >> 8] ~/ 10) % 10;
-            memory[iRegister + 2] =
-                (vRegisters[(code & 0x0F00) >> 8] % 100) % 10;
+            memory[iRegister + 1] = (vRegisters[(code & 0x0F00) >> 8] ~/ 10) % 10;
+            memory[iRegister + 2] = (vRegisters[(code & 0x0F00) >> 8] % 100) % 10;
             programCounter += 2;
             break loop;
           case 0x0055:
@@ -315,7 +303,6 @@ class Cpu {
             programCounter += 2;
             break loop;
           default:
-            print('ERROR: unknown code $code');
             break loop;
         }
         break loop;
@@ -325,12 +312,49 @@ class Cpu {
   }
 }
 
-/// Most significant bit
-int flp2(int x) {
-  x |= (x >> 1);
-  x |= (x >> 2);
-  x |= (x >> 4);
-  x |= (x >> 8);
-  x |= (x >> 16);
-  return x - (x >> 1);
+///
+class Screen {
+  final pixels = new Uint8List(2048);
+  final width = 32;
+  final height = 64;
+
+  operator [](int index) => pixels[index];
+  operator []=(int index, int value) => pixels[index] = value;
+
+  void clear() {
+    for (var i = 0; i < 2048; i++) {
+      pixels[i] = 0;
+    }
+  }
+
+  bool setPixel(int x, int y) {
+    pixels[y*height + x] ^= 1;
+    return pixels[y*height + x] == 1;
+  }
+  int getPixels(int x, int y) => pixels[y*height + x];
+
+  String toString() {
+    final buffer = new StringBuffer();
+    for (int j = 0; j < height; j++) {
+      for (int i = 0; i < width; i++) {
+        if (getPixels(j, i) == 1) {
+          buffer.write('\u{2588}');
+        } else {
+          buffer.write(' ');
+        }
+      }
+      buffer.write('\n');
+    }
+    return buffer.toString();
+  }
 }
+
+/// Most significant bit
+int flp2(int x) { 
+  x |= (x >> 1); 
+  x |= (x >> 2); 
+  x |= (x >> 4); 
+  x |= (x >> 8); 
+  x |= (x >> 16); 
+  return x - (x >> 1); 
+} 

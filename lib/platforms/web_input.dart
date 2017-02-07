@@ -22,7 +22,7 @@ const keyMap = const <int, int>{
 };
 
 class WebInput implements InputModule {
-  int _keyCode = 36;
+  int _keyCode;
 
   WebInput() {
     document.body.onKeyPress.listen((event) {
@@ -32,11 +32,12 @@ class WebInput implements InputModule {
         _keyCode = code;
       }
     });
+    document.body.onKeyUp.listen((event) {
+      _keyCode = null;
+    });
   }
+
+  bool keyPressed(int index) => _keyCode == index;
 
   int get keyCode => _keyCode;
-
-  void clear() {
-    _keyCode = 36;
-  }
 }
