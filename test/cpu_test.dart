@@ -143,7 +143,7 @@ void main() {
 
         expect(cpu.programCounter, 0x204);
       });
-       test('0x5xy0 does not skip the next instruction if Vx != Vy', () {
+      test('0x5xy0 does not skip the next instruction if Vx != Vy', () {
         cpu.vRegisters[0x0] = 12;
         cpu.vRegisters[0x1] = 2;
 
@@ -359,45 +359,49 @@ void main() {
       });
     });
     group('0xE series', () {
-      test('0xEx9E skips the next instruction if the key with the value'
-           'of Vx is pressed', () {
-          press(0x1);
-          cpu.vRegisters[0x0] = 0x1;
+      test(
+          '0xEx9E skips the next instruction if the key with the value'
+          'of Vx is pressed', () {
+        press(0x1);
+        cpu.vRegisters[0x0] = 0x1;
 
-          load([0xE0, 0x9E]);
-          run(1);
+        load([0xE0, 0x9E]);
+        run(1);
 
-          expect(cpu.programCounter, 0x204);
-        });
-      test('0xEx9E does not skip the next instruction if the key with the'
-           'value of Vx is not pressed', () {
-          cpu.vRegisters[0x0] = 0x1;
+        expect(cpu.programCounter, 0x204);
+      });
+      test(
+          '0xEx9E does not skip the next instruction if the key with the'
+          'value of Vx is not pressed', () {
+        cpu.vRegisters[0x0] = 0x1;
 
-          load([0xE0, 0x9E]);
-          run(1);
+        load([0xE0, 0x9E]);
+        run(1);
 
-          expect(cpu.programCounter, 0x202);
-        });
-      test('0xExA1 skips the next instruction if the key with the value'
-           ' of Vx is not pressed', () {
-          press(0x3);
-          cpu.vRegisters[0x0] = 0x1;
+        expect(cpu.programCounter, 0x202);
+      });
+      test(
+          '0xExA1 skips the next instruction if the key with the value'
+          ' of Vx is not pressed', () {
+        press(0x3);
+        cpu.vRegisters[0x0] = 0x1;
 
-          load([0xE0, 0xA1]);
-          run(1);
+        load([0xE0, 0xA1]);
+        run(1);
 
-          expect(cpu.programCounter, 0x204);
-        });
-      test('0xExA1 does not skip the next instruction if the key with the'
-           'value of Vx is pressed', () {
-          press(0x1);
-          cpu.vRegisters[0x0] = 0x1;
+        expect(cpu.programCounter, 0x204);
+      });
+      test(
+          '0xExA1 does not skip the next instruction if the key with the'
+          'value of Vx is pressed', () {
+        press(0x1);
+        cpu.vRegisters[0x0] = 0x1;
 
-          load([0xE0, 0xA1]);
-          run(1);
+        load([0xE0, 0xA1]);
+        run(1);
 
-          expect(cpu.programCounter, 0x202);
-        });
+        expect(cpu.programCounter, 0x202);
+      });
     });
     group('0xF series', () {
       test('0xFX07 sets Vx to the value of the delay timer', () {
