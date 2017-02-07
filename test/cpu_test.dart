@@ -1,5 +1,8 @@
 import 'package:test/test.dart';
-import 'package:chip8/chip8.dart';
+import 'package:chip8/cpu.dart';
+import 'package:chip8/modules/screen_module.dart';
+import 'package:chip8/modules/sound_module.dart';
+import 'package:chip8/modules/timer_module.dart';
 import 'dart:typed_data';
 import 'dart:math';
 

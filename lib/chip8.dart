@@ -4,9 +4,3 @@
 /// Support for doing something awesome.
 ///
 /// More dartdocs go here.
-library chip8;
-
-export 'src/cpu.dart';
-export 'src/modules/sound_module.dart';
-export 'src/modules/screen_module.dart';
-export 'src/modules/timer_module.dart';
