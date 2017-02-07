@@ -1,1 +1,5 @@
-abstract class InputModule {}
+abstract class InputModule {
+  int get keyCode;
+
+  void clear() {}
+}

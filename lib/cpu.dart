@@ -4,6 +4,7 @@ import 'dart:math';
 import 'modules/screen_module.dart';
 import 'modules/sound_module.dart';
 import 'modules/timer_module.dart';
+import 'modules/input_module.dart';
 
 const fontSet = const <int>[
   0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
@@ -35,20 +36,21 @@ class Cpu {
   final Uint8List vRegisters = new Uint8List(16);
   final Uint8List memory = new Uint8List(4096);
   final Uint16List stack = new Uint16List(16);
+  final InputModule input;
   final ScreenModule screen;
   final SoundModule sound;
   final DelayTimerModule delayTimer;
   final SoundTimerModule soundTimer;
   final Random rand;
 
-  var input = 0x0;
   var iRegister = 0x0;
   var programCounter = 0x200;
   var stackPointer = 0x0;
   var drawFlag = false;
   var blockFlag = false;
 
-  Cpu(this.rand, this.screen, this.sound, this.delayTimer, this.soundTimer) {
+  Cpu(this.rand, this.screen, this.input, this.sound, this.delayTimer,
+      this.soundTimer) {
     // Load font set.
     for (var i = 0, length = fontSet.length; i < length; i++) {
       memory[i] = fontSet[i];
@@ -58,6 +60,10 @@ class Cpu {
   }
   void loop() {
     executeOpcode(opcode);
+    if (drawFlag) {
+      screen.draw();
+      drawFlag = false;
+    }
   }
 
   void loadProgram(Uint16List buffer) {
@@ -192,6 +198,7 @@ class Cpu {
             programCounter += 2;
             break loop;
           default:
+            print('ERROR: unknown code $code');
         }
         break loop;
       case 0x9:
@@ -241,11 +248,15 @@ class Cpu {
         break loop;
       case 0xE:
         if ((code & 0xFF) == 0x9E) {
+          print('hello?');
           // Skips the next instruction if the key stored in VX is pressed
-          programCounter = vRegisters[leftMiddle] == input ? 4 : 2;
+          programCounter = vRegisters[leftMiddle] == input.keyCode ? 4 : 2;
         } else if ((code & 0xFF) == 0x0A) {
+          print('hello?');
           // Skips the next instruction if the key stored in VX isn't pressed.
-          programCounter = vRegisters[leftMiddle] != input ? 4 : 2;
+          programCounter = vRegisters[leftMiddle] != input.keyCode ? 4 : 2;
+        } else {
+          print('ERROR: unknown code $code');
         }
         break loop;
       case 0xF:
@@ -302,6 +313,7 @@ class Cpu {
             programCounter += 2;
             break loop;
           default:
+            print('ERROR: unknown code $code');
             break loop;
         }
         break loop;

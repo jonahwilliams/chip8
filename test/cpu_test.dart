@@ -1,10 +1,12 @@
+import 'dart:typed_data';
+import 'dart:math';
+
 import 'package:test/test.dart';
 import 'package:chip8/cpu.dart';
 import 'package:chip8/modules/screen_module.dart';
 import 'package:chip8/modules/sound_module.dart';
 import 'package:chip8/modules/timer_module.dart';
-import 'dart:typed_data';
-import 'dart:math';
+import 'package:chip8/modules/input_module.dart';
 
 class TestScreen implements ScreenModule {
   final int height = 64;
@@ -13,6 +15,11 @@ class TestScreen implements ScreenModule {
   void draw() {}
   bool setPixel(int x, int y) => false;
   bool getPixel(int x, int y) => false;
+}
+
+class TestInput implements InputModule {
+  int keyCode = 30;
+  void clear() {}
 }
 
 class TestSound implements SoundModule {
@@ -36,6 +43,7 @@ void main() {
   group('CPU Opcode', () {
     Cpu cpu;
     Random random;
+    InputModule input;
     ScreenModule screen;
     SoundModule sound;
     DelayTimerModule delayTimer;
@@ -45,9 +53,10 @@ void main() {
       random = new Random(0);
       screen = new TestScreen();
       sound = new TestSound();
+      input = new TestInput();
       delayTimer = new TestDelayTimer();
       soundTimer = new TestSoundTimer();
-      cpu = new Cpu(random, screen, sound, delayTimer, soundTimer);
+      cpu = new Cpu(random, screen, input, sound, delayTimer, soundTimer);
     });
 
     void load(List<int> codes) {
