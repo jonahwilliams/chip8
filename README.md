@@ -1,4 +1,5 @@
 # chip8
+pub serve and check out the inputs
 
 ## Features and bugs
 
