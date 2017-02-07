@@ -1,16 +1,7 @@
 # chip8
 
-A library for Dart developers. It is awesome.
+[missile](example.png  "Logo Title Text 1")
 
-## Usage
-
-A simple usage example:
-
-    import 'package:chip8/chip8.dart';
-
-    main() {
-      var awesome = new Awesome();
-    }
 
 ## Features and bugs
 
