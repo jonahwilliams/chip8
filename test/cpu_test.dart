@@ -19,6 +19,9 @@ class TestScreen implements ScreenModule {
 
 class TestInput implements InputModule {
   int keyCode = 30;
+
+  bool keyPressed(int key) => key == keyCode;
+
   void clear() {}
 }
 
@@ -43,7 +46,7 @@ void main() {
   group('CPU Opcode', () {
     Cpu cpu;
     Random random;
-    InputModule input;
+    TestInput input;
     ScreenModule screen;
     SoundModule sound;
     DelayTimerModule delayTimer;
@@ -61,6 +64,10 @@ void main() {
 
     void load(List<int> codes) {
       cpu.loadProgram(new Uint16List.fromList(codes));
+    }
+
+    void press(int keyCode) {
+      input.keyCode = keyCode;
     }
 
     void run(int cycles) {
@@ -352,7 +359,25 @@ void main() {
       });
     });
     group('0xE series', () {
-      
+      test('0xEx9E skips the next instruction if the key with the value'
+           'of Vx is pressed', () {
+          press(0x1);
+          cpu.vRegisters[0x0] = 0x1;
+
+          load([0xE0, 0x9E]);
+          run(1);
+
+          expect(cpu.programCounter, 0x204);
+        });
+      test('0xEx9E does not skip the next instruction if the key with the'
+           'value of Vx is not pressed', () {
+          cpu.vRegisters[0x0] = 0x1;
+
+          load([0xE0, 0x9E]);
+          run(1);
+
+          expect(cpu.programCounter, 0x202);
+        });
     });
     group('0xF series', () {
       test('0xFX07 sets Vx to the value of the delay timer', () {

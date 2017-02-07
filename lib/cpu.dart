@@ -251,10 +251,10 @@ class Cpu {
       case 0xE:
         if ((code & 0xFF) == 0x9E) {
           // Skips the next instruction if the key stored in VX is pressed
-          programCounter = (vRegisters[leftMiddle] == currentInput)  ? 4 : 2;
+          programCounter += (vRegisters[leftMiddle] == currentInput)  ? 4 : 2;
         } else if ((code & 0xFF) == 0x0A) {
           // Skips the next instruction if the key stored in VX isn't pressed.
-          programCounter = (vRegisters[leftMiddle]  == currentInput) ? 4 : 2;
+          programCounter += (vRegisters[leftMiddle]  == currentInput) ? 4 : 2;
         } else {
           print('ERROR: unknown code $code');
         }
