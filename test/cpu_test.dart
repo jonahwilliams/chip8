@@ -11,7 +11,11 @@ import 'package:chip8/modules/input_module.dart';
 class TestScreen implements ScreenModule {
   final int height = 64;
   final int width = 32;
-  void clear() {}
+  bool cleared = false;
+  void clear() {
+    cleared = true;
+  }
+
   void draw() {}
   bool setPixel(int x, int y) => false;
   bool getPixel(int x, int y) => false;
@@ -47,7 +51,7 @@ void main() {
     Cpu cpu;
     Random random;
     TestInput input;
-    ScreenModule screen;
+    TestScreen screen;
     SoundModule sound;
     DelayTimerModule delayTimer;
     SoundTimerModule soundTimer;
@@ -77,7 +81,42 @@ void main() {
       }
     }
 
-    group('0x0 series', () {});
+    group('0x0 series', () {
+      test('0x00E0 clears the display', () {
+        expect(screen.cleared, isFalse);
+
+        load([0x00, 0xE0]);
+        run(1);
+
+        expect(cpu.programCounter, 0x202);
+        expect(screen.cleared, isTrue);
+      });
+
+      test('0x00EE returns from a subroutine', () {
+        cpu.stackPointer = 1;
+        cpu.stack[0] = 0x208;
+
+        load([0x00, 0xEE]);
+        run(1);
+
+        expect(cpu.programCounter, 0x208);
+        expect(cpu.stack, [0x208, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+        expect(cpu.stackPointer, isZero);
+      });
+      test('0x00EE returns from a subroutine - nested', () {
+        cpu.stackPointer = 2;
+        cpu.stack[0] = 0x208;
+        cpu.stack[1] = 0x202;
+
+        load([0x00, 0xEE, 0x00, 0xEE]);
+        run(2);
+
+        expect(cpu.programCounter, 0x208);
+        expect(cpu.stack,
+            [0x208, 0x202, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+        expect(cpu.stackPointer, isZero);
+      });
+    });
 
     group('0x1 series', () {
       test('0x1nnn jumps to location nnn', () {

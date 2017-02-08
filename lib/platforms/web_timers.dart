@@ -24,6 +24,7 @@ class WebSoundTimer implements SoundTimerModule {
   WebSoundTimer() {
     new Timer.periodic(sixtyHertz, (_) {
       if (time > 0) {
+        _sound.play();
         time--;
       }
     });

@@ -6,19 +6,24 @@ import '../modules/screen_module.dart';
 class CanvasScreen implements ScreenModule {
   final _buffer = new Uint8List(2048);
   final CanvasRenderingContext2D _context;
-  final int _scale;
+  final ImageData _rawBuffer;
+
   final width = 64;
   final height = 32;
 
-  factory CanvasScreen(String id, int scale) {
+  factory CanvasScreen(String id) {
     final root = document.getElementById(id);
-    final canvas = new CanvasElement(width: 64 * scale, height: 32 * scale);
+    final canvas = new CanvasElement(width: 64, height: 32)
+      ..style.imageRendering = 'pixelated'
+      ..style.height = '${32 * 10}px'
+      ..style.width = '${64 * 10}px';
     root.append(canvas);
-    final ctx = canvas.getContext('2d');
-    return new CanvasScreen._(ctx, scale);
+    final CanvasRenderingContext2D ctx = canvas.getContext('2d');
+    ctx.imageSmoothingEnabled = false;
+    return new CanvasScreen._(ctx, ctx.getImageData(0, 0, 64, 32));
   }
 
-  CanvasScreen._(this._context, this._scale) {
+  CanvasScreen._(this._context, this._rawBuffer) {
     _context.fillStyle = 'black';
   }
 
@@ -26,19 +31,21 @@ class CanvasScreen implements ScreenModule {
     for (int i = 0; i < _buffer.length; i++) {
       _buffer[i] = 0;
     }
-    _context.clearRect(0, 0, width * _scale, height * _scale);
+  }
+
+  void drawLoop() {
+    draw();
+    window.requestAnimationFrame((_) => drawLoop());
   }
 
   void draw() {
-    for (int y = 0; y < height; y++) {
-      for (int x = 0; x < width; x++) {
-        if (getPixel(x, y)) {
-          _context..fillRect(x * _scale, y * _scale, _scale, _scale);
-        } else {
-          _context.clearRect(x * _scale, y * _scale, _scale, _scale);
-        }
-      }
+    for (int i = 0; i < _rawBuffer.data.length; i += 4) {
+      _rawBuffer.data[i] = 1 | _buffer[i ~/ 4] * 255;
+      _rawBuffer.data[i + 1] = 1 | _buffer[i ~/ 4] * 255;
+      _rawBuffer.data[i + 2] = 1 | _buffer[i ~/ 4] * 255;
+      _rawBuffer.data[i + 3] = 255;
     }
+    _context.putImageData(_rawBuffer, 0, 0);
   }
 
   bool setPixel(int x, int y) {

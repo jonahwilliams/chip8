@@ -5,6 +5,8 @@ abstract class ScreenModule {
 
   void clear();
 
+  void drawLoop();
+
   void draw();
 
   bool setPixel(int x, int y);

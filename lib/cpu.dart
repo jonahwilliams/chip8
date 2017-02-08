@@ -58,14 +58,16 @@ class Cpu {
     }
     // attach soundModule to sound timer
     soundTimer.attach(sound);
+
+    // begin draw loop
+    screen.drawLoop();
   }
   void loop() {
     currentInput = input.keyCode;
     executeOpcode(opcode);
-    if (drawFlag) {
-      screen.draw();
-      drawFlag = false;
-    }
+    // if (drawFlag) {
+    //   drawFlag = false;
+    // }
   }
 
   void loadProgram(Uint16List buffer) {
@@ -95,8 +97,8 @@ class Cpu {
           stackPointer--;
         } else {
           // Calls RCA 1802 program at address NNN
-          iRegister = (leftMiddle << 8) | (rightMiddle << 4) | right;
-          programCounter += 2;
+          // iRegister = (leftMiddle << 8) | (rightMiddle << 4) | right;
+          // programCounter += 2;
         }
         break loop;
       case 0x1:
