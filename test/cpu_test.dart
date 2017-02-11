@@ -16,6 +16,8 @@ class TestScreen implements ScreenModule {
     cleared = true;
   }
 
+  void drawLoop() {}
+
   void draw() {}
   bool setPixel(int x, int y) => false;
   bool getPixel(int x, int y) => false;
@@ -93,28 +95,23 @@ void main() {
       });
 
       test('0x00EE returns from a subroutine', () {
-        cpu.stackPointer = 1;
-        cpu.stack[0] = 0x208;
+        cpu.stack.add(0x208);
 
         load([0x00, 0xEE]);
         run(1);
 
         expect(cpu.programCounter, 0x208);
-        expect(cpu.stack, [0x208, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
-        expect(cpu.stackPointer, isZero);
+        expect(cpu.stack, []);
       });
       test('0x00EE returns from a subroutine - nested', () {
-        cpu.stackPointer = 2;
-        cpu.stack[0] = 0x208;
-        cpu.stack[1] = 0x202;
+        cpu.stack.add(0x208);
+        cpu.stack.add(0x202);
 
         load([0x00, 0xEE, 0x00, 0xEE]);
         run(2);
 
         expect(cpu.programCounter, 0x208);
-        expect(cpu.stack,
-            [0x208, 0x202, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
-        expect(cpu.stackPointer, isZero);
+        expect(cpu.stack, []);
       });
     });
 
@@ -132,7 +129,6 @@ void main() {
         run(1);
 
         expect(cpu.programCounter, 0x111);
-        expect(cpu.stackPointer, 0x1);
         expect(cpu.stack[0], 0x200);
       });
     });

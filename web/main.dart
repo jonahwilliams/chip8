@@ -1,6 +1,5 @@
 import 'dart:math';
 import 'dart:async';
-import 'dart:typed_data';
 
 import 'package:chip8/cpu.dart';
 import 'package:chip8/platforms/web_screen.dart';
@@ -17,8 +16,8 @@ void main() {
     new WebSound(),
     new WebDelayTimer(),
     new WebSoundTimer());
-  cpu.loadProgram(new Uint16List.fromList(missile));
-  new Timer.periodic(const Duration(microseconds: 10), (_) {
+  cpu.loadProgram(invaders);
+  new Timer.periodic(const Duration(microseconds: 100), (_) {
     cpu.loop();
   });
 }
