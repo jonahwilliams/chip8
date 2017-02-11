@@ -339,7 +339,7 @@ void main() {
         run(1);
 
         expect(cpu.vRegisters[0x0], 18);
-        expect(cpu.vRegisters[0xF], 8);
+        expect(cpu.vRegisters[0xF], 1);
         expect(cpu.programCounter, 0x202);
       });
     });

@@ -25,13 +25,7 @@ const fontSet = const <int>[
   0xF0, 0x80, 0xF0, 0x80, 0x80 // F
 ];
 
-/// The Chip-8 cpu
-///
-/// http://devernay.free.fr/hacks/chip8/C8TECH10.HTM
-/// The chip-8 had 15 8 bit general purpose registers, named from
-/// V0 to VE.  The 16th was the carry flag.
-///
-/// The is an index register and a program counter.
+/// The Chip-8
 class Cpu {
   final Uint8List vRegisters = new Uint8List(16);
   final Uint8List memory = new Uint8List(4096);
@@ -46,7 +40,6 @@ class Cpu {
   var iRegister = 0x0;
   var programCounter = 0x200;
   var drawFlag = false;
-  var blockFlag = false;
   var currentInput = null;
 
   Cpu(this.rand, this.screen, this.input, this.sound, this.delayTimer,
@@ -70,6 +63,15 @@ class Cpu {
     for (int i = 0; i < buffer.length; i++) {
       memory[0x200 + i] = buffer[i];
     }
+  }
+
+  String toDebugString() {
+    final buffer = new StringBuffer();
+    buffer.writeln(opcode.toRadixString(16));
+    // buffer.writeln(stack);
+    // buffer.writeln(vRegisters);
+    // buffer.writeln(iRegister);
+    return buffer.toString();
   }
 
   // fetch the current operation
@@ -100,7 +102,11 @@ class Cpu {
         programCounter = code & 0x0FFF;
         break;
       case 0x3:
-        programCounter += vRegisters[x] == (code & 0x00FF) ? 4 : 2;
+        if (vRegisters[x] == (code & 0x00FF)) {
+          programCounter += 4;
+        } else {
+          programCounter += 2;
+        }
         break;
       case 0x4:
         programCounter += vRegisters[x] != (code & 0x00FF) ? 4 : 2;
@@ -141,7 +147,7 @@ class Cpu {
             programCounter += 2;
             break;
           case 0x5:
-            vRegisters[0xF] = vRegisters[x] > vRegisters[y] ? 1 : 0;
+            vRegisters[0xF] = vRegisters[x] > vRegisters[y] ? 0 : 1;
             vRegisters[x] -= vRegisters[y];
             programCounter += 2;
             break;
@@ -156,7 +162,7 @@ class Cpu {
             programCounter += 2;
             break;
           case 0xE:
-            vRegisters[0xF] = (vRegisters[x] & 0x80) == 1 ? 1 : 0;
+            vRegisters[0xF] = vRegisters[x] >> 7;
             vRegisters[x] <<= 1;
             programCounter += 2;
             break;
@@ -185,17 +191,19 @@ class Cpu {
       case 0xD:
         final h = code & 0x000F;
         final w = 8;
+        final xx = vRegisters[x];
+        final yy = vRegisters[y];
         vRegisters[0xF] = 0x0;
 
         for (int row = 0; row < h; row++) {
           int pixel = memory[iRegister + row];
           for (int col = 0; col < w; col++) {
             if ((pixel & 0x80) > 0) {
-              if (screen.setPixel(x + col, y + row)) {
+              if (screen.setPixel(xx + col, yy + row)) {
                 vRegisters[0xF] = 0x1;
               }
             }
-            pixel = pixel << 1;
+            pixel <<= 1;
           }
         }
         drawFlag = true;

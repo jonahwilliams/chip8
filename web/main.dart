@@ -16,8 +16,8 @@ void main() {
     new WebSound(),
     new WebDelayTimer(),
     new WebSoundTimer());
-  cpu.loadProgram(invaders);
-  new Timer.periodic(const Duration(microseconds: 100), (_) {
+  cpu.loadProgram(missile);
+  new Timer.periodic(const Duration(milliseconds: 1), (_) {
     cpu.loop();
   });
 }
