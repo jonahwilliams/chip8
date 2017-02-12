@@ -10,6 +10,7 @@ class CanvasScreen implements ScreenModule {
 
   final width = 64;
   final height = 32;
+  var drawFlag = false;
 
   factory CanvasScreen(String id) {
     final root = document.getElementById(id);
@@ -34,7 +35,10 @@ class CanvasScreen implements ScreenModule {
   }
 
   void drawLoop() {
-    draw();
+    if (drawFlag) {
+      draw();
+      drawFlag = false;
+    }
     window.requestAnimationFrame((_) => drawLoop());
   }
 

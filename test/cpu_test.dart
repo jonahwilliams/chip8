@@ -5,7 +5,6 @@ import 'package:test/test.dart';
 import 'package:chip8/cpu.dart';
 import 'package:chip8/modules/screen_module.dart';
 import 'package:chip8/modules/sound_module.dart';
-import 'package:chip8/modules/timer_module.dart';
 import 'package:chip8/modules/input_module.dart';
 
 class TestScreen implements ScreenModule {
@@ -35,19 +34,6 @@ class TestSound implements SoundModule {
   void play() {}
 }
 
-class TestDelayTimer implements DelayTimerModule {
-  int time = 0;
-}
-
-class TestSoundTimer implements SoundTimerModule {
-  SoundModule _sound;
-  int time = 0;
-
-  void attach(SoundModule sound) {
-    _sound = sound;
-  }
-}
-
 void main() {
   group('CPU Opcode', () {
     Cpu cpu;
@@ -55,17 +41,13 @@ void main() {
     TestInput input;
     TestScreen screen;
     SoundModule sound;
-    DelayTimerModule delayTimer;
-    SoundTimerModule soundTimer;
 
     setUp(() {
       random = new Random(0);
       screen = new TestScreen();
       sound = new TestSound();
       input = new TestInput();
-      delayTimer = new TestDelayTimer();
-      soundTimer = new TestSoundTimer();
-      cpu = new Cpu(random, screen, input, sound, delayTimer, soundTimer);
+      cpu = new Cpu(random, screen, input, sound);
     });
 
     void load(List<int> codes) {
@@ -440,7 +422,7 @@ void main() {
     });
     group('0xF series', () {
       test('0xFX07 sets Vx to the value of the delay timer', () {
-        cpu.delayTimer.time = 24;
+        cpu.delayTimer = 24;
 
         load([0xF0, 0x07]);
         run(1);
@@ -450,24 +432,24 @@ void main() {
       });
 
       test('0xFX15 sets the delay timer to Vx', () {
-        cpu.delayTimer.time = 0;
+        cpu.delayTimer = 0;
         cpu.vRegisters[0x0] = 2;
 
         load([0xF0, 0x15]);
         run(1);
 
-        expect(cpu.delayTimer.time, 2);
+        expect(cpu.delayTimer, 2);
         expect(cpu.programCounter, 0x202);
       });
 
       test('0xFX18 sets the sound timer to Vx', () {
-        cpu.soundTimer.time = 0;
+        cpu.soundTimer = 0;
         cpu.vRegisters[0x0] = 2;
 
         load([0xF0, 0x18]);
         run(1);
 
-        expect(cpu.soundTimer.time, 2);
+        expect(cpu.soundTimer, 2);
         expect(cpu.programCounter, 0x202);
       });
 

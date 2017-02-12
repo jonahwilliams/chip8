@@ -1,7 +1,7 @@
 abstract class ScreenModule {
   int get height;
-
   int get width;
+  set drawFlag(bool value);
 
   void clear();
 
