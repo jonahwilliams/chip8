@@ -1,11 +1,9 @@
 import 'dart:math';
 import 'dart:async';
-import 'dart:typed_data';
 
 import 'package:chip8/cpu.dart';
 import 'package:chip8/platforms/web_screen.dart';
 import 'package:chip8/platforms/web_sound.dart';
-import 'package:chip8/platforms/web_timers.dart';
 import 'package:chip8/platforms/web_input.dart';
 import 'package:chip8/binaries/games.dart';
 
@@ -14,11 +12,9 @@ void main() {
     new Random(0),
     new CanvasScreen('app'),
     new WebInput(),
-    new WebSound(),
-    new WebDelayTimer(),
-    new WebSoundTimer());
-  cpu.loadProgram(new Uint16List.fromList(missile));
-  new Timer.periodic(const Duration(microseconds: 10), (_) {
+    new WebSound());
+  cpu.loadProgram(invaders);
+  new Timer.periodic(const Duration(milliseconds: 1), (_) {
     cpu.loop();
   });
 }

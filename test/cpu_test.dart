@@ -5,7 +5,6 @@ import 'package:test/test.dart';
 import 'package:chip8/cpu.dart';
 import 'package:chip8/modules/screen_module.dart';
 import 'package:chip8/modules/sound_module.dart';
-import 'package:chip8/modules/timer_module.dart';
 import 'package:chip8/modules/input_module.dart';
 
 class TestScreen implements ScreenModule {
@@ -15,6 +14,8 @@ class TestScreen implements ScreenModule {
   void clear() {
     cleared = true;
   }
+
+  void drawLoop() {}
 
   void draw() {}
   bool setPixel(int x, int y) => false;
@@ -33,19 +34,6 @@ class TestSound implements SoundModule {
   void play() {}
 }
 
-class TestDelayTimer implements DelayTimerModule {
-  int time = 0;
-}
-
-class TestSoundTimer implements SoundTimerModule {
-  SoundModule _sound;
-  int time = 0;
-
-  void attach(SoundModule sound) {
-    _sound = sound;
-  }
-}
-
 void main() {
   group('CPU Opcode', () {
     Cpu cpu;
@@ -53,17 +41,13 @@ void main() {
     TestInput input;
     TestScreen screen;
     SoundModule sound;
-    DelayTimerModule delayTimer;
-    SoundTimerModule soundTimer;
 
     setUp(() {
       random = new Random(0);
       screen = new TestScreen();
       sound = new TestSound();
       input = new TestInput();
-      delayTimer = new TestDelayTimer();
-      soundTimer = new TestSoundTimer();
-      cpu = new Cpu(random, screen, input, sound, delayTimer, soundTimer);
+      cpu = new Cpu(random, screen, input, sound);
     });
 
     void load(List<int> codes) {
@@ -93,28 +77,23 @@ void main() {
       });
 
       test('0x00EE returns from a subroutine', () {
-        cpu.stackPointer = 1;
-        cpu.stack[0] = 0x208;
+        cpu.stack.add(0x208);
 
         load([0x00, 0xEE]);
         run(1);
 
         expect(cpu.programCounter, 0x208);
-        expect(cpu.stack, [0x208, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
-        expect(cpu.stackPointer, isZero);
+        expect(cpu.stack, []);
       });
       test('0x00EE returns from a subroutine - nested', () {
-        cpu.stackPointer = 2;
-        cpu.stack[0] = 0x208;
-        cpu.stack[1] = 0x202;
+        cpu.stack.add(0x208);
+        cpu.stack.add(0x202);
 
         load([0x00, 0xEE, 0x00, 0xEE]);
         run(2);
 
         expect(cpu.programCounter, 0x208);
-        expect(cpu.stack,
-            [0x208, 0x202, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
-        expect(cpu.stackPointer, isZero);
+        expect(cpu.stack, []);
       });
     });
 
@@ -132,7 +111,6 @@ void main() {
         run(1);
 
         expect(cpu.programCounter, 0x111);
-        expect(cpu.stackPointer, 0x1);
         expect(cpu.stack[0], 0x200);
       });
     });
@@ -343,7 +321,7 @@ void main() {
         run(1);
 
         expect(cpu.vRegisters[0x0], 18);
-        expect(cpu.vRegisters[0xF], 8);
+        expect(cpu.vRegisters[0xF], 1);
         expect(cpu.programCounter, 0x202);
       });
     });
@@ -444,7 +422,7 @@ void main() {
     });
     group('0xF series', () {
       test('0xFX07 sets Vx to the value of the delay timer', () {
-        cpu.delayTimer.time = 24;
+        cpu.delayTimer = 24;
 
         load([0xF0, 0x07]);
         run(1);
@@ -454,24 +432,24 @@ void main() {
       });
 
       test('0xFX15 sets the delay timer to Vx', () {
-        cpu.delayTimer.time = 0;
+        cpu.delayTimer = 0;
         cpu.vRegisters[0x0] = 2;
 
         load([0xF0, 0x15]);
         run(1);
 
-        expect(cpu.delayTimer.time, 2);
+        expect(cpu.delayTimer, 2);
         expect(cpu.programCounter, 0x202);
       });
 
       test('0xFX18 sets the sound timer to Vx', () {
-        cpu.soundTimer.time = 0;
+        cpu.soundTimer = 0;
         cpu.vRegisters[0x0] = 2;
 
         load([0xF0, 0x18]);
         run(1);
 
-        expect(cpu.soundTimer.time, 2);
+        expect(cpu.soundTimer, 2);
         expect(cpu.programCounter, 0x202);
       });
 
